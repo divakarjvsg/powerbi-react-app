@@ -1,0 +1,50 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - name: "Warm up"
+      duration: 30
+      arrivalRate: 2
+    - name: "Ramp up load"
+      duration: 60
+      arrivalRate: 5
+      rampTo: 25
+    - name: "Peak load"
+      duration: 120
+      arrivalRate: 25
+  plugins:
+    metrics-by-endpoint: {}
+  processor: "./load-test-functions.js"
+
+scenarios:
+  - name: "PowerBI Report Interactions"
+    weight: 7
+    flow:
+      - get:
+          url: "/"
+      - think: 1
+      - get:
+          url: "/reports"
+      - function: "simulateReportInteraction"
+      - think: 3
+      - get:
+          url: "/reports"
+      - think: 2
+      - loop:
+          - get:
+              url: "/performance"
+          - think: 1
+        count: 3
+
+  - name: "Performance Monitor"
+    weight: 3
+    flow:
+      - get:
+          url: "/"
+      - think: 1
+      - get:
+          url: "/performance"
+      - loop:
+          - think: 2
+          - get:
+              url: "/performance"
+        count: 5
